@@ -1,9 +1,29 @@
 # src/utils/tools.py
+from typing import Any
 from cProfile import Profile
 import argparse
 import pstats
 import io
+import re
+import emoji
 
+def extract_mentions(text: Any) -> list[Any]:
+    """
+    CALL: extract_emojis(text: Any)
+    DESCRIPTION: This method extracts mentions from a tweet.
+    RESULT: list[Any]
+    """
+    # Regular expression to extract mentions (@username)
+    mention_pattern = re.compile(r"@(\w+)")
+    return mention_pattern.findall(text) if isinstance(text, str) else []
+
+def extract_emojis(text: Any) -> list[Any]:
+    """
+    CALL: extract_emojis(text: Any)
+    DESCRIPTION: This method extracts emojis from text.
+    RESULT: list[Any]
+    """
+    return [char for char in text if char in emoji.EMOJI_DATA] if isinstance(text, str) else []
 
 def get_app_args() -> argparse.Namespace:
     """
