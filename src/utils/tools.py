@@ -4,8 +4,8 @@ from cProfile import Profile
 import argparse
 import pstats
 import io
-import re
 import emoji
+import re
 
 def extract_mentions(text: Any) -> list[Any]:
     """
@@ -16,7 +16,7 @@ def extract_mentions(text: Any) -> list[Any]:
     # Regular expression to extract mentions (@username)
     mention_pattern = re.compile(r"@(\w+)")
     return mention_pattern.findall(text) if isinstance(text, str) else []
-
+    
 def extract_emojis(text: Any) -> list[Any]:
     """
     CALL: extract_emojis(text: Any)
