@@ -1,53 +1,34 @@
 # pyright: strict
-from utils.constants import *
+from mgr.tweet_mgr.tweet_aggregator_mgr import TweetAggregator
+from mgr.tweet_mgr.tweet_analyzer_mgr import TweetAnalyzer
+from mgr.chunk_mgr import JsonChunkReader
+from utils.constants import SMALL_CHUNK_SIZE
 from utils.tools import get_app_args, get_stats_in_memory
 from typing import List, Tuple
 from pprint import pprint
-from datetime import datetime
-from memory_profiler import profile # type: ignore
-from collections import Counter, defaultdict
-import pandas as pd
+from memory_profiler import profile  # type: ignore
+from datetime import date
 import cProfile
 import gc
 import argparse
 import logging
-    
-@profile
-def q1_memory(file_path: str) -> List[Tuple[datetime.date, str]]:
-    chunk_size = SMALL_CHUNK_SIZE
-    chunks = pd.read_json(file_path, lines=True, chunksize=chunk_size)
-    date_counts = Counter() 
-    date_user_counts = defaultdict(Counter)
-    
-    for chunk in chunks:
-        chunk['date'] = chunk['date'].dt.date
-        
-        date_counts.update(chunk['date'].value_counts().to_dict())
-        
-        for date, user in zip(chunk['date'], chunk['user'].apply(lambda u: u.get('username'))):
-            if user: 
-                date_user_counts[date][user] += 1
-            
-        del chunk
-        gc.collect()
-        
-    top_10_dates = date_counts.most_common(10)
-    results: List = []
-    
-    for date, _ in top_10_dates:
-        top_user = date_user_counts[date].most_common(1)
-        if top_user:
-            user_name, _ = top_user[0]
-            results.append((date, user_name))
 
-    del chunks
-    del date_counts
-    del date_user_counts
-    gc.collect()
-    
+
+@profile
+def q1_memory(file_path: str) -> List[Tuple[date, str]]:
+    """
+    CALL: q1_memory(file_path: str)
+    DESCRIPTION: Processes a JSON file to extract the top user for each of the top 10 dates (Focus on optimizing memory).
+    RESULT: List[Tuple[date, str]]
+    """
+    reader = JsonChunkReader(file_path, SMALL_CHUNK_SIZE)
+    aggregator = TweetAggregator()
+    analyzer = TweetAnalyzer(reader, aggregator)
+    results = analyzer.analyze()
+
     pprint(results, sort_dicts=False)
     return results
-    
+
 if __name__ == '__main__':
     try:
         app_args: argparse.Namespace = get_app_args()
@@ -65,6 +46,6 @@ if __name__ == '__main__':
         get_stats_in_memory(profiler)
         
     except Exception as err:
-        logging.error(f"Error getting arguments, exception is {str(err)}", exc_info=err)
+        logging.error(f"An unexpected error occurred, exception is {str(err)}", exc_info=err)
     finally:
         gc.collect()
